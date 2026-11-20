@@ -1,55 +1,60 @@
 # Renewal Cockpit
 
-Build the shell of "Renewal Cockpit", a web app for the procurement team of a fictional fintech. It
-answers three questions: Will we land the fiscal year on budget? Which contracts need a decision before
-they auto-renew? Where can we cut or consolidate spend?
+> **Synthetic data.** A fictional fintech with fictional vendors. The only real-world values are public
+> list prices used as price benchmarks, each shown with its source and date.
 
-IMPORTANT
-- Do NOT enable Lovable Cloud and do not create any backend, database, auth or edge function yet.
-  I will connect an existing Supabase project in the next step. Pages show empty states for now.
-- All data is synthetic. Show a small "Synthetic data" tag in the header on every page.
+The web front end of the **Vendor Spend & Renewal Cockpit**, a portfolio project in indirect procurement.
+It answers three questions a procurement lead is asked every month:
 
-STRUCTURE
-- Header: the attached monogram SVG top-left (use the file as is, do not redraw it), app name,
-  "Synthetic data" tag, navigation.
-- Pages and routes: Overview (/), Budget vs. actual (/budget), Renewals (/renewals),
-  Vendor detail (/vendors/:vendorId), Savings (/savings), Contract intake (/intake).
-- Footer: "Synthetic data. Source and method: github.com/stephanyalves-eng/vendor-renewal-cockpit"
-  and a small, quiet "Owner sign-in" link (no function yet).
-- Each page: a Newsreader title, a one-sentence description, and an empty state card.
+1. **Will we land the fiscal year on budget?** If not, is it price, volume or spend nobody planned?
+2. **Which contracts need a decision before they auto-renew?** By when, and what should we do?
+3. **Where can we cut or consolidate spend?** How much is each action worth?
 
-DESIGN SYSTEM (follow strictly; define as CSS variables / Tailwind theme tokens)
-- Colors: Warm Ivory #F6F3E8 page background; Deep Forest #0B302B for headings, primary text
-  accents and the primary button; Muted Sage #8FAF9E for secondary series and quiet fills;
-  Mineral Bronze #A56B45 as the single highlight, at most one highlighted element per view.
-  Body text near-black on ivory.
-- Typography: Newsreader (serif, light) only for page titles; IBM Plex Sans for UI, body and numbers
-  with tabular figures; IBM Plex Mono uppercase for small labels and eyebrows.
-- Cards: white, 1px hairline border, 4px radius, no shadows. Buttons and inputs: 2px radius.
-  No gradients, no glassmorphism, no emoji.
-- Charts (for later pages): zero baseline, labelled axes with units, rows-only gridlines, direct labels
-  where possible, one highlighted series with the rest greyed. Meaning by icon plus word, never colour
-  alone.
-- Money: BRL, formatted like "BRL 18.5M" in KPIs and "BRL 1,234,567" in tables.
-- Copy in English, sentence case, no exclamation marks. Responsive down to 375px.
+Data, forecast, variance split and renewal rules live in the companion repository
+**[vendor-renewal-cockpit](https://github.com/stephanyalves-eng/vendor-renewal-cockpit)**, which builds
+and tests every figure this app shows.
 
-This project was built with [Lovable](https://lovable.dev).
+## Pages
 
-## Build with Lovable
+| Page | What it shows |
+| --- | --- |
+| **Overview** | FY landing vs. budget, budget variance, auto-renewal exposure, savings YTD, landing by category and the urgent renewal decisions |
+| **Budget vs. actual** | Monthly actuals, forecast and budget, and the budget-to-landing waterfall split into price, volume and unbudgeted spend, with category and department filters |
+| **Renewals** | Every contract ending in the next 120 days with its decision deadline, recommendation and estimated annual impact; urgent deadlines flagged |
+| **Vendors** | Contract terms, seat utilization, price against a public benchmark, the recommendation and the rule behind it |
+| **Savings** | Negotiated savings vs. cost avoidance, kept separate |
+| **Contract intake** | An AI step reads a contract PDF and extracts five renewal terms; each field is checked against the contract on file |
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/8ba0589e-cce5-4900-89c3-cca82059f335).
+Every table exports to Excel with a "Synthetic data" first row.
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+## How it works
 
-## Development
+```
+vendor-renewal-cockpit (Python)  ──▶  Supabase (Postgres views, row level security)  ──▶  this app
+        tested figures                    read-only for visitors                     draws them
+```
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+- **No business logic in the browser.** The app reads database views that are tested against the
+  Python results to the cent; the front end only formats and filters them.
+- **Visitors are read-only.** Reads use Supabase's public key under row level security. Status changes
+  made by a visitor stay in their own browser.
+- **Owner-only writes.** A signed-in owner listed in `app_admins` can change a contract status and save
+  contract extractions; the database enforces this, not the UI.
+- **AI extraction never runs for visitors.** The `/api/extract-contract` server route checks the session
+  (401) and the admin row (403) before calling the model. Visitors see results saved from a real run.
+
+## Built with
+
+TanStack Start, React, Tailwind CSS, Recharts and Supabase. The app shell, Overview and Renewals were
+generated with [Lovable](https://lovable.dev); the remaining pages, the Excel export and the tests were
+written directly in this repository to keep Lovable credit use low.
+
+## Run locally
+
+Requires Node.js. The `.env` file holds only the Supabase URL and the public (publishable) key.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+npm install
+npm run dev     # http://localhost:8080
+npm test        # unit tests for formatting, filters, waterfall, export and field checks
 ```
