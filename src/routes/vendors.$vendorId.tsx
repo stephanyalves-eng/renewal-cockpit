@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight, TriangleAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { PageContainer } from "@/components/page-layout";
 import { QuerySection } from "@/components/query-section";
 import { formatBrlCents, formatBrlFull, formatBrlKpi } from "@/lib/money";
 import { budgetDirection, dateParts, formatDate, formatPercent } from "@/lib/overview-format";
@@ -41,12 +42,12 @@ const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-
 function Page() {
   const { vendorId } = Route.useParams();
   return (
-    <main className="mx-auto max-w-6xl px-4 pt-8 pb-12 sm:px-6 sm:pt-10">
+    <PageContainer>
       <Link to="/vendors" className={`${focusRing} eyebrow text-muted-foreground hover:text-forest`}>← All vendors</Link>
       <QuerySection fallback={<div className="mt-6 h-96 animate-pulse bg-muted" aria-busy="true" aria-label="Loading vendor" />} errorTitle="Vendor details couldn't load">
         <VendorPage vendorId={vendorId} />
       </QuerySection>
-    </main>
+    </PageContainer>
   );
 }
 
@@ -97,7 +98,7 @@ function VendorPage({ vendorId }: { vendorId: string }) {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[3fr_2fr] lg:items-start">
         <div className="space-y-6">
-          <TermsCard v={v} />
+          <RecommendationCard v={v} />
           {v.billing_model === "per_seat" && (
             <Card title="Seat utilization">
               <QuerySection fallback={<div className="mt-4 h-56 animate-pulse bg-muted" aria-busy="true" />} errorTitle="Seat utilization couldn't load">
@@ -105,9 +106,9 @@ function VendorPage({ vendorId }: { vendorId: string }) {
               </QuerySection>
             </Card>
           )}
+          <TermsCard v={v} />
         </div>
         <div className="space-y-6">
-          <RecommendationCard v={v} />
           {v.benchmark_product && <BenchmarkCard v={v} />}
           <FyCard v={v} />
         </div>
@@ -196,7 +197,13 @@ function BenchmarkCard({ v }: { v: VendorDetail }) {
 
 function RecommendationCard({ v }: { v: VendorDetail }) {
   return (
-    <Card title="Recommendation">
+    <Card title="Next decision">
+      {v.recommendation && (
+        <p className="mt-1 text-sm text-muted-foreground">
+          Decide by <span className="font-medium tabular-nums text-forest">{formatDate(v.decision_deadline)}</span>
+          {v.auto_renew ? " · auto-renews after that" : " · expires unless renewed"}
+        </p>
+      )}
       {v.recommendation ? (
         <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2">
           <p className="text-2xl font-medium text-forest">{v.recommendation}</p>

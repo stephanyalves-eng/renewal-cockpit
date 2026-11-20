@@ -1,13 +1,13 @@
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowUpRight, CircleCheck, CircleHelp, CircleX, TriangleAlert } from "lucide-react";
+import { PageContainer, PageHeader } from "@/components/page-layout";
 import { QuerySection } from "@/components/query-section";
 import { useSession } from "@/hooks/use-session";
 import { ExtractContractCard, useIsAdmin } from "@/components/extract-contract-card";
-import { compareField, FIELD_LABEL, groupByFile, type ExtractionGroup } from "@/lib/intake-logic";
+import { compareField, FIELD_LABEL, formatFieldValue, groupByFile, onFileRaw, type ExtractionGroup } from "@/lib/intake-logic";
 import { getIntakeData } from "@/lib/intake.functions";
 import type { ContractTerms, IntakeField } from "@/lib/intake.types";
-import { formatBrlCents } from "@/lib/money";
 import { formatDate } from "@/lib/overview-format";
 
 const intakeQuery = queryOptions({ queryKey: ["intake"], queryFn: () => getIntakeData() });
@@ -40,12 +40,10 @@ function Page() {
   const session = useSession();
   const isAdmin = useIsAdmin(session);
   return (
-    <main className="mx-auto max-w-6xl px-4 pt-8 pb-12 sm:px-6 sm:pt-10">
-      <p className="eyebrow text-muted-foreground">Intake</p>
-      <h1 className="page-title mt-2 text-4xl sm:text-5xl">Contract intake</h1>
-      <p className="mt-3 max-w-2xl text-base text-foreground/80">{DESCRIPTION}</p>
+    <PageContainer>
+      <PageHeader eyebrow="Intake" title="Contract intake" description={DESCRIPTION} />
 
-      <section className="surface mt-8 px-5 py-5" aria-labelledby="samples-title">
+      <section className="surface mt-6 px-5 py-5" aria-labelledby="samples-title">
         <h2 id="samples-title" className="text-xl font-normal">Sample contracts</h2>
         <p className="mt-1 text-sm text-muted-foreground">Three synthetic agreements with fictional parties, built from the contracts table.</p>
         <ul className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
@@ -70,7 +68,7 @@ function Page() {
       <QuerySection fallback={<div className="mt-6 h-72 animate-pulse bg-muted" aria-busy="true" aria-label="Loading extractions" />} errorTitle="Stored extractions couldn't load">
         <StoredExtractions />
       </QuerySection>
-    </main>
+    </PageContainer>
   );
 }
 
@@ -90,33 +88,40 @@ function StoredExtractions() {
   }
   return (
     <div className="mt-6 space-y-6">
-      {groups.map((g) => (
-        <ExtractionCard key={g.file_name} group={g} terms={g.contract_id ? termsById.get(g.contract_id) : undefined} />
+      {groups.map((g, i) => (
+        <ExtractionCard key={g.file_name} group={g} terms={g.contract_id ? termsById.get(g.contract_id) : undefined} defaultOpen={i === 0} />
       ))}
     </div>
   );
 }
 
-function storedValue(field: IntakeField, t: ContractTerms): string {
-  switch (field) {
-    case "end_date": return formatDate(t.end_date);
-    case "auto_renew": return t.auto_renew ? "Yes" : "No";
-    case "notice_days": return `${t.notice_days} days`;
-    case "price_escalator_pct": return `${t.price_escalator_pct.toFixed(1)}%`;
-    case "termination_fee": return formatBrlCents(t.termination_fee);
-  }
+
+function CheckStatus({ results }: { results: ("match" | "differs" | "missing")[] }) {
+  const differ = results.filter((r) => r === "differs").length;
+  const matched = results.filter((r) => r === "match").length;
+  if (differ > 0)
+    return <span className="inline-flex items-center gap-1 text-sm font-medium text-bronze"><CircleX className="h-4 w-4" aria-hidden="true" />{differ} of {results.length} differ</span>;
+  if (matched === results.length)
+    return <span className="inline-flex items-center gap-1 text-sm font-medium text-forest"><CircleCheck className="h-4 w-4" aria-hidden="true" />{matched} of {results.length} match</span>;
+  return <span className="inline-flex items-center gap-1 text-sm text-muted-foreground"><CircleHelp className="h-4 w-4" aria-hidden="true" />{matched} of {results.length} match, rest not compared</span>;
 }
 
-function ExtractionCard({ group, terms }: { group: ExtractionGroup; terms: ContractTerms | undefined }) {
+function ExtractionCard({ group, terms, defaultOpen }: { group: ExtractionGroup; terms: ContractTerms | undefined; defaultOpen: boolean }) {
+  const results = group.fields.map((f) => (terms ? compareField(f.field, f.extracted_value, terms) : "missing"));
   return (
-    <section className="surface px-5 py-5" aria-label={`Extraction of ${group.file_name}`}>
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-xl font-normal">{group.file_name}</h2>
-        <p className="text-xs text-muted-foreground">
+    <details className="surface group px-5 py-4" open={defaultOpen} aria-label={`Extraction of ${group.file_name}`}>
+      <summary className={`${focusRing} flex cursor-pointer list-none flex-wrap items-center justify-between gap-x-4 gap-y-1`}>
+        <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+          <CheckStatus results={results} />
+          <span className="text-lg font-normal text-forest">{group.file_name}</span>
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {group.contract_id && <>Contract {group.contract_id} · </>}
           {group.model ?? "Model not recorded"} · {formatDate(group.extracted_at)}
-          {group.contract_id && <> · contract {group.contract_id}</>}
-        </p>
-      </div>
+          <span className="ml-2 text-forest group-open:hidden" aria-hidden="true">Show</span>
+          <span className="ml-2 hidden text-forest group-open:inline" aria-hidden="true">Hide</span>
+        </span>
+      </summary>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[36rem] text-left text-sm">
           <thead className="eyebrow text-muted-foreground">
@@ -129,12 +134,18 @@ function ExtractionCard({ group, terms }: { group: ExtractionGroup; terms: Contr
             </tr>
           </thead>
           <tbody>
-            {group.fields.map((f) => {
-              const result = terms ? compareField(f.field, f.extracted_value, terms) : "missing";
+            {group.fields.map((f, idx) => {
+              const result = results[idx]!;
+              const shown = formatFieldValue(f.field, f.extracted_value);
               return (
-                <tr key={f.field} className="border-b border-border align-top last:border-0">
+                <tr key={f.field} className={`border-b border-border align-top last:border-0 ${result === "differs" ? "bg-bronze/10" : ""}`}>
                   <td className="py-2.5 pr-3 font-medium">{FIELD_LABEL[f.field]}</td>
-                  <td className="py-2.5 pr-3 tabular-nums">{f.extracted_value ?? "—"}</td>
+                  <td className="py-2.5 pr-3 tabular-nums">
+                    {shown}
+                    {f.extracted_value !== null && f.extracted_value !== shown && (
+                      <span className="block text-xs text-muted-foreground">raw: {f.extracted_value}</span>
+                    )}
+                  </td>
                   <td className="py-2.5 pr-3 tabular-nums">
                     {f.confidence !== null ? `${Math.round(f.confidence * 100)}%` : "—"}
                     {f.uncertain && (
@@ -143,7 +154,7 @@ function ExtractionCard({ group, terms }: { group: ExtractionGroup; terms: Contr
                       </span>
                     )}
                   </td>
-                  <td className="py-2.5 pr-3 tabular-nums">{terms ? storedValue(f.field, terms) : "—"}</td>
+                  <td className="py-2.5 pr-3 tabular-nums">{terms ? formatFieldValue(f.field, onFileRaw(f.field, terms)) : "—"}</td>
                   <td className="py-2.5">
                     {result === "match" && <span className="inline-flex items-center gap-1 text-forest"><CircleCheck className="h-4 w-4" aria-hidden="true" />Match</span>}
                     {result === "differs" && <span className="inline-flex items-center gap-1 font-medium text-bronze"><CircleX className="h-4 w-4" aria-hidden="true" />Differs</span>}
@@ -155,6 +166,6 @@ function ExtractionCard({ group, terms }: { group: ExtractionGroup; terms: Contr
           </tbody>
         </table>
       </div>
-    </section>
+    </details>
   );
 }

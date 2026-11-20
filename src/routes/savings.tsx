@@ -1,6 +1,7 @@
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ExportButton } from "@/components/export-button";
+import { PageContainer, PageHeader, TableToolbar } from "@/components/page-layout";
 import { QuerySection } from "@/components/query-section";
 import type { ExportColumn } from "@/lib/export-excel";
 import { formatBrlCents, formatBrlFull, formatBrlKpi } from "@/lib/money";
@@ -40,17 +41,16 @@ const exportColumns: ExportColumn<SavingsEvent>[] = [
 
 function Page() {
   return (
-    <main className="mx-auto max-w-6xl px-4 pt-8 pb-12 sm:px-6 sm:pt-10">
-      <p className="eyebrow text-muted-foreground">Savings</p>
-      <h1 className="page-title mt-2 text-4xl sm:text-5xl">Savings</h1>
-      <p className="mt-3 max-w-2xl text-base text-foreground/80">
-        A saving is a lower price than we paid before; cost avoidance is a lower price than the first quote for
-        something we never bought.
-      </p>
+    <PageContainer>
+      <PageHeader
+        eyebrow="Savings"
+        title="Savings"
+        description="A saving is a lower price than we paid before; cost avoidance is a lower price than the first quote for something we never bought."
+      />
       <QuerySection fallback={<div className="mt-8 h-72 animate-pulse bg-muted" aria-busy="true" aria-label="Loading savings" />} errorTitle="Savings couldn't load">
         <SavingsLog />
       </QuerySection>
-    </main>
+    </PageContainer>
   );
 }
 
@@ -60,7 +60,7 @@ function SavingsLog() {
   const total = (t: SavingsEvent["type"]) => data.filter((r) => r.type === t).reduce((s, r) => s + r.annualized_impact, 0);
   return (
     <>
-      <dl className="surface mt-8 grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+      <dl className="surface mt-6 grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-x sm:divide-y-0">
         {(["saving", "cost_avoidance"] as const).map((t) => (
           <div key={t} className="px-5 py-4">
             <dt className="text-sm font-medium text-forest/80">{TYPE_LABEL[t]} · annualized</dt>
@@ -70,10 +70,9 @@ function SavingsLog() {
         ))}
       </dl>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">{data.length} events, oldest first</p>
+      <TableToolbar count={`${data.length} events, oldest first`}>
         <ExportButton page="savings" columns={exportColumns} rows={data} />
-      </div>
+      </TableToolbar>
 
       <div className="surface mt-3 overflow-x-auto">
         <table className="w-full min-w-[44rem] text-left text-sm">

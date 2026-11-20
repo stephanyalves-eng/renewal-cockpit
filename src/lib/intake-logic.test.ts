@@ -38,3 +38,18 @@ describe("groupByFile", () => {
     expect(INTAKE_FIELDS[0]).toBe("end_date");
   });
 });
+
+import { formatFieldValue } from "./intake-logic";
+
+describe("formatFieldValue", () => {
+  it("formats both sides the same way", () => {
+    expect(formatFieldValue("end_date", "2027-02-10")).toBe("10 Feb 2027");
+    expect(formatFieldValue("auto_renew", "true")).toBe("Yes");
+    expect(formatFieldValue("auto_renew", true)).toBe("Yes");
+    expect(formatFieldValue("notice_days", "60")).toBe("60 days");
+    expect(formatFieldValue("price_escalator_pct", "4")).toBe("4.0%");
+    expect(formatFieldValue("termination_fee", "100890")).toBe("BRL 100,890.00");
+  });
+  it("keeps unreadable text as it is", () => expect(formatFieldValue("end_date", "end of March")).toBe("end of March"));
+  it("shows a dash for a missing value", () => expect(formatFieldValue("notice_days", null)).toBe("—"));
+});

@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, Minus, Plus, TriangleAlert } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
 import { ExportButton } from "@/components/export-button";
+import { PageContainer, PageHeader, TableToolbar } from "@/components/page-layout";
 import { QuerySection } from "@/components/query-section";
 import { useSession } from "@/hooks/use-session";
 import type { ExportColumn } from "@/lib/export-excel";
@@ -31,7 +32,7 @@ function renewalExportColumns(statusOf: (r: RenewalRow) => string): ExportColumn
 }
 
 const renewalsQueryOptions = queryOptions({ queryKey: ["renewals"], queryFn: () => getRenewals() });
-const DESCRIPTION = "Contracts that need a decision before their notice window closes and they auto-renew.";
+const DESCRIPTION = "Every contract ending in the next 120 days, with or without auto-renewal: when to decide, what to do and what it is worth.";
 
 export const Route = createFileRoute("/renewals")({
   head: () => ({
@@ -62,14 +63,12 @@ const label = (s: string) => s.replace(/_/g, " ").replace(/^./, (c) => c.toUpper
 
 function Page() {
   return (
-    <main className="mx-auto max-w-6xl px-4 pt-8 pb-12 sm:px-6 sm:pt-10">
-      <p className="eyebrow text-muted-foreground">Renewals</p>
-      <h1 className="page-title mt-2 text-4xl sm:text-5xl">Renewals</h1>
-      <p className="mt-3 max-w-2xl text-base text-foreground/80">{DESCRIPTION}</p>
+    <PageContainer>
+      <PageHeader eyebrow="Renewals" title="Renewals" description={DESCRIPTION} />
       <QuerySection fallback={<TableSkeleton />} errorTitle="Renewals couldn't load">
         <RenewalsTable />
       </QuerySection>
-    </main>
+    </PageContainer>
   );
 }
 
@@ -144,9 +143,18 @@ function Deadline({ row }: { row: RenewalRow }) {
   );
 }
 
-function Details({ row }: { row: RenewalRow }) {
+function Details({ row, secondary = false }: { row: RenewalRow; secondary?: boolean }) {
   return (
     <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">
+      {secondary && (
+        <>
+          <dt className="text-muted-foreground">Est. annual impact</dt><dd className="tabular-nums">{formatBrlFull(row.estimated_annual_impact)}</dd>
+          <dt className="text-muted-foreground">Days left to decide</dt><dd className="tabular-nums">{row.days_to_deadline}</dd>
+          <dt className="text-muted-foreground">Contract ends</dt><dd className="tabular-nums">{formatDate(row.end_date)}</dd>
+          <dt className="text-muted-foreground">Auto-renew · Notice</dt><dd>{row.auto_renew ? "Yes" : "No"} · {row.notice_days} days</dd>
+          <dt className="text-muted-foreground">Category</dt><dd>{row.category}</dd>
+        </>
+      )}
       {row.rationale && (<><dt className="text-muted-foreground">Rationale</dt><dd>{row.rationale}</dd></>)}
       {row.utilization !== null && (<><dt className="text-muted-foreground">Utilization</dt><dd className="tabular-nums">{(row.utilization * 100).toFixed(1)}%</dd></>)}
       {row.target_seats !== null && (<><dt className="text-muted-foreground">Target seats</dt><dd className="tabular-nums">{row.target_seats}</dd></>)}
@@ -187,13 +195,19 @@ function RenewalsTable() {
 
   return (
     <>
-      <p className="mt-8 text-sm text-foreground/85">
-        <span className="font-medium text-forest">{data.length} contracts</span> ·{" "}
-        <span className="inline-flex items-center gap-1 font-medium text-bronze">
-          <TriangleAlert className="h-3.5 w-3.5" aria-hidden="true" />{urgentCount} urgent
-        </span>{" "}
-        · Estimated annual impact <span className="font-medium tabular-nums text-forest">{formatBrlCents(total)}</span>
-      </p>
+      <TableToolbar
+        count={
+          <>
+            <span className="font-medium text-forest">{data.length} contracts</span> ·{" "}
+            <span className="inline-flex items-center gap-1 font-medium text-bronze">
+              <TriangleAlert className="h-3.5 w-3.5" aria-hidden="true" />{urgentCount} urgent
+            </span>{" "}
+            · Estimated annual impact <span className="font-medium tabular-nums text-forest">{formatBrlCents(total)}</span>
+          </>
+        }
+      >
+        <ExportButton page="renewals" columns={renewalExportColumns(statusOf)} rows={rows} />
+      </TableToolbar>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
         <span className="text-muted-foreground">Sort:</span>
@@ -204,9 +218,6 @@ function RenewalsTable() {
           Estimated annual impact {SortIcon && <SortIcon className="h-3.5 w-3.5" aria-hidden="true" />}
           {sort !== "deadline" && <span className="sr-only">{sort === "impact_desc" ? "highest first" : "lowest first"}</span>}
         </button>
-        <span className="ml-auto">
-          <ExportButton page="renewals" columns={renewalExportColumns(statusOf)} rows={rows} />
-        </span>
       </div>
 
       {!editor.signedIn && (
@@ -226,15 +237,15 @@ function RenewalsTable() {
             <tr className="border-b border-border">
               <th className="w-8 px-2 py-3"><span className="sr-only">Details</span></th>
               <th className="px-2 py-3 font-normal">Vendor</th>
-              <th className="px-2 py-3 font-normal">Category</th>
-              <th className="px-2 py-3 font-normal">End date</th>
+              <th className="px-2 py-3 font-normal" aria-sort={sort === "deadline" ? "ascending" : "none"}>Decision deadline</th>
+              <th className="px-2 py-3 font-normal">Recommendation</th>
+              <th className="px-2 py-3 font-normal">Status</th>
+              <th className="px-2 py-3 text-right font-normal" aria-sort={sort === "impact_desc" ? "descending" : sort === "impact_asc" ? "ascending" : "none"}>Est. annual impact</th>
+              <th className="px-2 py-3 text-right font-normal">Days left</th>
+              <th className="px-2 py-3 font-normal">Ends</th>
               <th className="px-2 py-3 font-normal">Auto-renew</th>
               <th className="px-2 py-3 text-right font-normal">Notice</th>
-              <th className="px-2 py-3 font-normal" aria-sort={sort === "deadline" ? "ascending" : "none"}>Deadline</th>
-              <th className="px-2 py-3 text-right font-normal">Days left</th>
-              <th className="px-2 py-3 font-normal">Recommendation</th>
-              <th className="px-2 py-3 text-right font-normal" aria-sort={sort === "impact_desc" ? "descending" : sort === "impact_asc" ? "ascending" : "none"}>Est. annual impact</th>
-              <th className="px-2 py-3 font-normal">Status</th>
+              <th className="px-2 py-3 font-normal">Category</th>
             </tr>
           </thead>
           <tbody>
@@ -248,15 +259,15 @@ function RenewalsTable() {
                     <td className="px-2 py-3 font-medium">
                       <Link to="/vendors/$vendorId" params={{ vendorId: row.vendor_id }} className={`${focusRing} text-forest underline decoration-sage underline-offset-2`}>{row.vendor_name}</Link>
                     </td>
-                    <td className="px-2 py-3">{row.category}</td>
+                    <td className="px-2 py-3 whitespace-nowrap"><Deadline row={row} /></td>
+                    <td className="px-2 py-3 font-medium">{row.recommendation}</td>
+                    <td className="px-2 py-2"><StatusSelect row={row} value={statusOf(row)} onChange={(v) => void editor.change(row.contract_id, v)} /></td>
+                    <td className="px-2 py-3 text-right whitespace-nowrap tabular-nums">{formatBrlFull(row.estimated_annual_impact)}</td>
+                    <td className="px-2 py-3 text-right tabular-nums">{row.days_to_deadline}</td>
                     <td className="px-2 py-3 whitespace-nowrap tabular-nums">{formatDate(row.end_date)}</td>
                     <td className="px-2 py-3">{row.auto_renew ? "Yes" : "No"}</td>
                     <td className="px-2 py-3 text-right tabular-nums">{row.notice_days} d</td>
-                    <td className="px-2 py-3 whitespace-nowrap"><Deadline row={row} /></td>
-                    <td className="px-2 py-3 text-right tabular-nums">{row.days_to_deadline}</td>
-                    <td className="px-2 py-3">{row.recommendation}</td>
-                    <td className="px-2 py-3 text-right whitespace-nowrap tabular-nums">{formatBrlFull(row.estimated_annual_impact)}</td>
-                    <td className="px-2 py-2"><StatusSelect row={row} value={statusOf(row)} onChange={(v) => void editor.change(row.contract_id, v)} /></td>
+                    <td className="px-2 py-3 text-muted-foreground">{row.category}</td>
                   </tr>
                   {isOpen && (
                     <tr id={id} className="border-b border-border bg-secondary/50">
@@ -281,20 +292,15 @@ function RenewalsTable() {
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                 <div className="min-w-0">
                   <Link to="/vendors/$vendorId" params={{ vendorId: row.vendor_id }} className={`${focusRing} font-medium text-forest underline decoration-sage underline-offset-2`}>{row.vendor_name}</Link>
-                  <p className="text-sm text-muted-foreground">{row.category}</p>
                 </div>
                 <ExpandButton row={row} open={isOpen} onToggle={() => toggle(row.contract_id)} controls={id} />
               </div>
               <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                <div><dt className="text-xs text-muted-foreground">Deadline</dt><dd><Deadline row={row} /></dd></div>
-                <div><dt className="text-xs text-muted-foreground">Days left</dt><dd className="tabular-nums">{row.days_to_deadline}</dd></div>
-                <div><dt className="text-xs text-muted-foreground">End date</dt><dd className="tabular-nums">{formatDate(row.end_date)}</dd></div>
-                <div><dt className="text-xs text-muted-foreground">Auto-renew · Notice</dt><dd>{row.auto_renew ? "Yes" : "No"} · {row.notice_days} d</dd></div>
-                <div><dt className="text-xs text-muted-foreground">Recommendation</dt><dd>{row.recommendation}</dd></div>
-                <div><dt className="text-xs text-muted-foreground">Est. annual impact</dt><dd className="tabular-nums">{formatBrlFull(row.estimated_annual_impact)}</dd></div>
+                <div><dt className="text-xs text-muted-foreground">Decision deadline</dt><dd><Deadline row={row} /></dd></div>
+                <div><dt className="text-xs text-muted-foreground">Recommendation</dt><dd className="font-medium">{row.recommendation}</dd></div>
                 <div className="col-span-2"><dt className="text-xs text-muted-foreground">Status</dt><dd className="mt-1"><StatusSelect row={row} value={statusOf(row)} onChange={(v) => void editor.change(row.contract_id, v)} /></dd></div>
               </dl>
-              {isOpen && <div id={id} className="mt-3 border-t border-border pt-3"><Details row={row} /></div>}
+              {isOpen && <div id={id} className="mt-3 border-t border-border pt-3"><Details row={row} secondary /></div>}
             </li>
           );
         })}
