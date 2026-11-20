@@ -8,6 +8,12 @@ export function formatBrlCompact(value: number): string {
   return `${sign}BRL ${Math.round(abs)}`;
 }
 
+/** Narrative variance format, e.g. "BRL 0.97M". */
+export function formatBrlMillions(value: number): string {
+  const sign = value < 0 ? "-" : "";
+  return `${sign}BRL ${(Math.abs(value) / 1e6).toFixed(2)}M`;
+}
+
 /** Table format, e.g. "BRL 1,234,567". */
 export function formatBrlFull(value: number): string {
   return `BRL ${Math.round(value).toLocaleString("en-US")}`;
