@@ -7,3 +7,8 @@ describe("money", () => {
     expect(formatBrlMillions(969_561.11)).toBe("BRL 0.97M"));
   it("formats tables as BRL 1,234,567", () => expect(formatBrlFull(1_234_567)).toBe("BRL 1,234,567"));
 });
+
+import { formatBrlCents } from "./money";
+describe("renewals total", () => {
+  it("shows the estimated annual impact total with cents", () => expect(formatBrlCents(1042321.8)).toBe("BRL 1,042,321.80"));
+});

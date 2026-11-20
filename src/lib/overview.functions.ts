@@ -12,8 +12,8 @@ function requiredString(value: string | null, field: string): string {
 }
 
 export const getOverviewKpis = createServerFn({ method: "GET" }).handler(async (): Promise<OverviewKpis> => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin
+  const db = (await import("./public-db.server")).createPublicDb();
+  const { data, error } = await db
     .from("v_kpis")
     .select(
       "anchor_date, fiscal_year, fy_landing, fy_budget, landing_vs_budget, landing_vs_budget_pct, savings_ytd, cost_avoidance_ytd, renewals_next_90_days, urgent_decisions, value_at_risk_auto_renewal",
@@ -45,8 +45,8 @@ export const getOverviewKpis = createServerFn({ method: "GET" }).handler(async (
 
 export const getCategoryLanding = createServerFn({ method: "GET" }).handler(
   async (): Promise<CategoryLanding[]> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+    const db = (await import("./public-db.server")).createPublicDb();
+    const { data, error } = await db
       .from("v_fy_landing_by_category")
       .select("category, landing, budget_fy, landing_vs_budget, landing_vs_budget_pct")
       .order("landing", { ascending: false });
@@ -68,8 +68,8 @@ export const getCategoryLanding = createServerFn({ method: "GET" }).handler(
 
 export const getUrgentRenewals = createServerFn({ method: "GET" }).handler(
   async (): Promise<UrgentRenewal[]> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+    const db = (await import("./public-db.server")).createPublicDb();
+    const { data, error } = await db
       .from("v_renewals_due")
       .select("contract_id, vendor_name, decision_deadline, recommendation, auto_renew, rationale, estimated_annual_impact, end_date")
       .eq("urgent", true)

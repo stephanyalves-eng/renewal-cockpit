@@ -33,3 +33,4 @@ use the editor.
 - Shared header/footer and page layout live in src/components/page-shell.tsx, mounted from __root; keeps every page consistent.
 - Money formatting goes through src/lib/money.ts; one place for BRL display rules.
 - No backend yet: the user will connect their own Supabase project; do not enable Lovable Cloud.
+- Reads use the publishable-key client (src/lib/public-db.server.ts in server fns); writes use the browser client with the user's session. Never use supabaseAdmin/service role; RLS must govern all access.

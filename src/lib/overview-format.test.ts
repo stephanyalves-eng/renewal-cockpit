@@ -36,3 +36,9 @@ describe("cockpit formats", () => {
   it("shows FY landing with two decimals in millions", () => expect(formatBrlKpi(18512345)).toBe("BRL 18.51M"));
   it("shows thousands compactly", () => expect(formatBrlKpi(910600)).toBe("BRL 910.6K"));
 });
+
+import { effectiveStatus } from "./demo-status";
+describe("demo status", () => {
+  it("browser value overrides the database value", () => expect(effectiveStatus("active", "C1", { C1: "terminated" })).toBe("terminated"));
+  it("falls back to the database value", () => expect(effectiveStatus("active", "C1", {})).toBe("active"));
+});

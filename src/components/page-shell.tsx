@@ -1,5 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/hooks/use-session";
 
 const nav = [
   { to: "/", label: "Overview" },
@@ -40,6 +43,27 @@ export function SiteHeader() {
   );
 }
 
+function OwnerAuthLink() {
+  const session = useSession();
+  const queryClient = useQueryClient();
+  const cls = "eyebrow self-start text-muted-foreground hover:text-forest focus-visible:outline-2 focus-visible:outline-forest sm:self-auto";
+  if (session) {
+    return (
+      <button
+        type="button"
+        className={cls}
+        onClick={async () => {
+          await supabase.auth.signOut();
+          void queryClient.invalidateQueries();
+        }}
+      >
+        Sign out ({session.user.email})
+      </button>
+    );
+  }
+  return <Link to="/signin" className={cls}>Owner sign-in</Link>;
+}
+
 export function SiteFooter() {
   return (
     <footer className="mt-16 border-t border-border">
@@ -55,9 +79,7 @@ export function SiteFooter() {
             github.com/stephanyalves-eng/vendor-renewal-cockpit
           </a>
         </p>
-        <button type="button" className="eyebrow self-start text-muted-foreground hover:text-forest sm:self-auto">
-          Owner sign-in
-        </button>
+        <OwnerAuthLink />
       </div>
     </footer>
   );

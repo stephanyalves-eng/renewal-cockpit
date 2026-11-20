@@ -26,3 +26,8 @@ export function formatBrlKpi(value: number): string {
   }
   return formatBrlCompact(value);
 }
+
+/** Totals with cents, e.g. "BRL 1,042,321.80". */
+export function formatBrlCents(value: number): string {
+  return `BRL ${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}

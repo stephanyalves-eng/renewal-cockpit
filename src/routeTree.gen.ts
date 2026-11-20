@@ -14,6 +14,7 @@ import { Route as BudgetRouteImport } from './routes/budget'
 import { Route as IntakeRouteImport } from './routes/intake'
 import { Route as RenewalsRouteImport } from './routes/renewals'
 import { Route as SavingsRouteImport } from './routes/savings'
+import { Route as SigninRouteImport } from './routes/signin'
 import { Route as VendorsVendorIdRouteImport } from './routes/vendors.$vendorId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +42,11 @@ const SavingsRoute = SavingsRouteImport.update({
   path: '/savings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VendorsVendorIdRoute = VendorsVendorIdRouteImport.update({
   id: '/vendors/$vendorId',
   path: '/vendors/$vendorId',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/intake': typeof IntakeRoute
   '/renewals': typeof RenewalsRoute
   '/savings': typeof SavingsRoute
+  '/signin': typeof SigninRoute
   '/vendors/$vendorId': typeof VendorsVendorIdRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/intake': typeof IntakeRoute
   '/renewals': typeof RenewalsRoute
   '/savings': typeof SavingsRoute
+  '/signin': typeof SigninRoute
   '/vendors/$vendorId': typeof VendorsVendorIdRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/intake': typeof IntakeRoute
   '/renewals': typeof RenewalsRoute
   '/savings': typeof SavingsRoute
+  '/signin': typeof SigninRoute
   '/vendors/$vendorId': typeof VendorsVendorIdRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +89,7 @@ export interface FileRouteTypes {
     | '/intake'
     | '/renewals'
     | '/savings'
+    | '/signin'
     | '/vendors/$vendorId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,6 +98,7 @@ export interface FileRouteTypes {
     | '/intake'
     | '/renewals'
     | '/savings'
+    | '/signin'
     | '/vendors/$vendorId'
   id:
     | '__root__'
@@ -96,6 +107,7 @@ export interface FileRouteTypes {
     | '/intake'
     | '/renewals'
     | '/savings'
+    | '/signin'
     | '/vendors/$vendorId'
   fileRoutesById: FileRoutesById
 }
@@ -105,6 +117,7 @@ export interface RootRouteChildren {
   IntakeRoute: typeof IntakeRoute
   RenewalsRoute: typeof RenewalsRoute
   SavingsRoute: typeof SavingsRoute
+  SigninRoute: typeof SigninRoute
   VendorsVendorIdRoute: typeof VendorsVendorIdRoute
 }
 
@@ -145,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SavingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/vendors/$vendorId': {
       id: '/vendors/$vendorId'
       path: '/vendors/$vendorId'
@@ -161,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   IntakeRoute: IntakeRoute,
   RenewalsRoute: RenewalsRoute,
   SavingsRoute: SavingsRoute,
+  SigninRoute: SigninRoute,
   VendorsVendorIdRoute: VendorsVendorIdRoute,
 }
 export const routeTree = rootRouteImport
