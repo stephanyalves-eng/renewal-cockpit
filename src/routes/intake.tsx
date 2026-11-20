@@ -1,20 +1,156 @@
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { PageShell } from "@/components/page-shell";
+import { ArrowUpRight, CircleCheck, CircleHelp, CircleX, TriangleAlert } from "lucide-react";
+import { QuerySection } from "@/components/query-section";
+import { useSession } from "@/hooks/use-session";
+import { compareField, FIELD_LABEL, groupByFile, type ExtractionGroup } from "@/lib/intake-logic";
+import { getIntakeData } from "@/lib/intake.functions";
+import type { ContractTerms, IntakeField } from "@/lib/intake.types";
+import { formatBrlCents } from "@/lib/money";
+import { formatDate } from "@/lib/overview-format";
+
+const intakeQuery = queryOptions({ queryKey: ["intake"], queryFn: () => getIntakeData() });
+const DESCRIPTION = "An AI step reads a contract PDF and extracts the terms that drive renewal decisions; a person reviews every field.";
+const SAMPLES_URL = "https://github.com/stephanyalves-eng/vendor-renewal-cockpit/blob/main/data/contracts";
+const SAMPLES = [
+  { file: "C013_dealstream.pdf", why: "Auto-renews with an urgent deadline" },
+  { file: "C019_contractly.pdf", why: "Price escalator above inflation" },
+  { file: "C016_workwell_suite.pdf", why: "Per-seat price above the public benchmark" },
+];
 
 export const Route = createFileRoute("/intake")({
   head: () => ({
     meta: [
       { title: "Contract intake · Renewal Cockpit" },
-      { name: "description", content: "Captures new contracts and renewal requests so they enter the review cycle on time." },
+      { name: "description", content: DESCRIPTION },
       { property: "og:title", content: "Contract intake · Renewal Cockpit" },
-      { property: "og:description", content: "Captures new contracts and renewal requests so they enter the review cycle on time." },
+      { property: "og:description", content: DESCRIPTION },
     ],
   }),
+  loader: ({ context }) => {
+    void context.queryClient.prefetchQuery(intakeQuery);
+  },
   component: Page,
 });
 
+const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest";
+
 function Page() {
+  const session = useSession();
   return (
-    <PageShell eyebrow="Intake" title="Contract intake" description="Captures new contracts and renewal requests so they enter the review cycle on time." emptyTitle="No submissions yet" emptyBody="Intake requests appear here once the data source is connected." />
+    <main className="mx-auto max-w-6xl px-4 pt-8 pb-12 sm:px-6 sm:pt-10">
+      <p className="eyebrow text-muted-foreground">Intake</p>
+      <h1 className="page-title mt-2 text-4xl sm:text-5xl">Contract intake</h1>
+      <p className="mt-3 max-w-2xl text-base text-foreground/80">{DESCRIPTION}</p>
+
+      <section className="surface mt-8 px-5 py-5" aria-labelledby="samples-title">
+        <h2 id="samples-title" className="text-xl font-normal">Sample contracts</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Three synthetic agreements with fictional parties, built from the contracts table.</p>
+        <ul className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
+          {SAMPLES.map((s) => (
+            <li key={s.file} className="border-t border-border pt-2">
+              <a href={`${SAMPLES_URL}/${s.file}`} target="_blank" rel="noreferrer" className={`${focusRing} inline-flex items-center gap-0.5 font-medium text-forest underline decoration-sage underline-offset-2`}>
+                {s.file}<ArrowUpRight className="h-3 w-3" aria-hidden="true" /><span className="sr-only"> (opens in a new tab)</span>
+              </a>
+              <p className="text-muted-foreground">{s.why}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 text-sm text-muted-foreground">
+          {session
+            ? "Live extraction is not connected yet."
+            : "Live extraction is limited to the owner to keep this demo free to run."}
+        </p>
+      </section>
+
+      <QuerySection fallback={<div className="mt-6 h-72 animate-pulse bg-muted" aria-busy="true" aria-label="Loading extractions" />} errorTitle="Stored extractions couldn't load">
+        <StoredExtractions />
+      </QuerySection>
+    </main>
+  );
+}
+
+function StoredExtractions() {
+  const { data } = useSuspenseQuery(intakeQuery);
+  const groups = groupByFile(data.extractions);
+  const termsById = new Map(data.terms.map((t) => [t.contract_id, t]));
+  if (groups.length === 0) {
+    return (
+      <section className="surface mt-6 px-6 py-10 text-center">
+        <p className="eyebrow text-muted-foreground">No extractions yet</p>
+        <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+          Results from the AI extraction of the sample contracts appear here, field by field, next to the values on file.
+        </p>
+      </section>
+    );
+  }
+  return (
+    <div className="mt-6 space-y-6">
+      {groups.map((g) => (
+        <ExtractionCard key={g.file_name} group={g} terms={g.contract_id ? termsById.get(g.contract_id) : undefined} />
+      ))}
+    </div>
+  );
+}
+
+function storedValue(field: IntakeField, t: ContractTerms): string {
+  switch (field) {
+    case "end_date": return formatDate(t.end_date);
+    case "auto_renew": return t.auto_renew ? "Yes" : "No";
+    case "notice_days": return `${t.notice_days} days`;
+    case "price_escalator_pct": return `${t.price_escalator_pct.toFixed(1)}%`;
+    case "termination_fee": return formatBrlCents(t.termination_fee);
+  }
+}
+
+function ExtractionCard({ group, terms }: { group: ExtractionGroup; terms: ContractTerms | undefined }) {
+  return (
+    <section className="surface px-5 py-5" aria-label={`Extraction of ${group.file_name}`}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-xl font-normal">{group.file_name}</h2>
+        <p className="text-xs text-muted-foreground">
+          {group.model ?? "Model not recorded"} · {formatDate(group.extracted_at)}
+          {group.contract_id && <> · contract {group.contract_id}</>}
+        </p>
+      </div>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[36rem] text-left text-sm">
+          <thead className="eyebrow text-muted-foreground">
+            <tr className="border-b border-border">
+              <th className="py-2 pr-3 font-normal">Field</th>
+              <th className="py-2 pr-3 font-normal">Extracted</th>
+              <th className="py-2 pr-3 font-normal">Confidence</th>
+              <th className="py-2 pr-3 font-normal">On file</th>
+              <th className="py-2 font-normal">Check</th>
+            </tr>
+          </thead>
+          <tbody>
+            {group.fields.map((f) => {
+              const result = terms ? compareField(f.field, f.extracted_value, terms) : "missing";
+              return (
+                <tr key={f.field} className="border-b border-border align-top last:border-0">
+                  <td className="py-2.5 pr-3 font-medium">{FIELD_LABEL[f.field]}</td>
+                  <td className="py-2.5 pr-3 tabular-nums">{f.extracted_value ?? "—"}</td>
+                  <td className="py-2.5 pr-3 tabular-nums">
+                    {f.confidence !== null ? `${Math.round(f.confidence * 100)}%` : "—"}
+                    {f.uncertain && (
+                      <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-bronze">
+                        <TriangleAlert className="h-3.5 w-3.5" aria-hidden="true" />Unsure
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-2.5 pr-3 tabular-nums">{terms ? storedValue(f.field, terms) : "—"}</td>
+                  <td className="py-2.5">
+                    {result === "match" && <span className="inline-flex items-center gap-1 text-forest"><CircleCheck className="h-4 w-4" aria-hidden="true" />Match</span>}
+                    {result === "differs" && <span className="inline-flex items-center gap-1 font-medium text-bronze"><CircleX className="h-4 w-4" aria-hidden="true" />Differs</span>}
+                    {result === "missing" && <span className="inline-flex items-center gap-1 text-muted-foreground"><CircleHelp className="h-4 w-4" aria-hidden="true" />Not compared</span>}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
