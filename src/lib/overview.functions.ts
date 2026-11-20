@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import type { CategoryLanding, OverviewKpis } from "./overview.types";
+import type { CategoryLanding, OverviewKpis, UrgentRenewal } from "./overview.types";
 
 function requiredNumber(value: number | null, field: string): number {
   if (value === null) throw new Error(`Missing numeric field: ${field}`);
@@ -16,7 +16,7 @@ export const getOverviewKpis = createServerFn({ method: "GET" }).handler(async (
   const { data, error } = await supabaseAdmin
     .from("v_kpis")
     .select(
-      "fiscal_year, fy_landing, fy_budget, landing_vs_budget, landing_vs_budget_pct, savings_ytd, cost_avoidance_ytd, renewals_next_90_days, urgent_decisions, value_at_risk_auto_renewal",
+      "anchor_date, fiscal_year, fy_landing, fy_budget, landing_vs_budget, landing_vs_budget_pct, savings_ytd, cost_avoidance_ytd, renewals_next_90_days, urgent_decisions, value_at_risk_auto_renewal",
     )
     .single();
 
@@ -26,6 +26,7 @@ export const getOverviewKpis = createServerFn({ method: "GET" }).handler(async (
   }
 
   return {
+    anchor_date: requiredString(data.anchor_date, "anchor_date"),
     fiscal_year: requiredNumber(data.fiscal_year, "fiscal_year"),
     fy_landing: requiredNumber(data.fy_landing, "fy_landing"),
     fy_budget: requiredNumber(data.fy_budget, "fy_budget"),
@@ -61,6 +62,33 @@ export const getCategoryLanding = createServerFn({ method: "GET" }).handler(
       budget_fy: requiredNumber(row.budget_fy, "budget_fy"),
       landing_vs_budget: requiredNumber(row.landing_vs_budget, "landing_vs_budget"),
       landing_vs_budget_pct: requiredNumber(row.landing_vs_budget_pct, "landing_vs_budget_pct"),
+    }));
+  },
+);
+
+export const getUrgentRenewals = createServerFn({ method: "GET" }).handler(
+  async (): Promise<UrgentRenewal[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("v_renewals_due")
+      .select("contract_id, vendor_name, decision_deadline, recommendation, auto_renew, rationale, estimated_annual_impact, end_date")
+      .eq("urgent", true)
+      .order("decision_deadline", { ascending: true });
+
+    if (error) {
+      console.error("v_renewals_due query failed", error);
+      throw new Error("Renewal decisions are unavailable.");
+    }
+
+    return data.map((row) => ({
+      contract_id: requiredString(row.contract_id, "contract_id"),
+      vendor_name: requiredString(row.vendor_name, "vendor_name"),
+      decision_deadline: requiredString(row.decision_deadline, "decision_deadline"),
+      recommendation: requiredString(row.recommendation, "recommendation"),
+      auto_renew: row.auto_renew === true,
+      rationale: row.rationale ?? "",
+      estimated_annual_impact: requiredNumber(row.estimated_annual_impact, "estimated_annual_impact"),
+      end_date: requiredString(row.end_date, "end_date"),
     }));
   },
 );

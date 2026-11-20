@@ -3,14 +3,15 @@ import {
   categoryLandingQueryOptions,
   OverviewDashboard,
   overviewKpisQueryOptions,
+  urgentRenewalsQueryOptions,
 } from "@/components/overview-dashboard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Renewal cockpit · Renewal Cockpit" },
+      { title: "Renewal overview · Renewal Cockpit" },
       { name: "description", content: "A fiscal-year view of budget, upcoming renewal decisions and savings opportunities." },
-      { property: "og:title", content: "Renewal cockpit · Renewal Cockpit" },
+      { property: "og:title", content: "Renewal overview · Renewal Cockpit" },
       { property: "og:description", content: "A fiscal-year view of budget, upcoming renewal decisions and savings opportunities." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/")({
   loader: ({ context }) => {
     void context.queryClient.prefetchQuery(overviewKpisQueryOptions);
     void context.queryClient.prefetchQuery(categoryLandingQueryOptions);
+    void context.queryClient.prefetchQuery(urgentRenewalsQueryOptions);
   },
   component: Page,
   errorComponent: ({ error }) => (

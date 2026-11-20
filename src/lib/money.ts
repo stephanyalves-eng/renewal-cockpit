@@ -18,3 +18,11 @@ export function formatBrlMillions(value: number): string {
 export function formatBrlFull(value: number): string {
   return `BRL ${Math.round(value).toLocaleString("en-US")}`;
 }
+
+/** Executive KPI format: millions with two decimals ("BRL 18.51M"), otherwise compact ("BRL 910.6K"). */
+export function formatBrlKpi(value: number): string {
+  if (Math.abs(value) >= 1e6 && Math.abs(value) < 1e9) {
+    return `${value < 0 ? "-" : ""}BRL ${(Math.abs(value) / 1e6).toFixed(2)}M`;
+  }
+  return formatBrlCompact(value);
+}

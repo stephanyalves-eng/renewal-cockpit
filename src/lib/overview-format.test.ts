@@ -27,3 +27,12 @@ describe("largest overrun", () => {
     expect(getLargestOverrunCategory([{ category: "SaaS", landing_vs_budget: -1 }])).toBeNull();
   });
 });
+
+import { formatDate, dateParts } from "./overview-format";
+import { formatBrlKpi } from "./money";
+describe("cockpit formats", () => {
+  it("formats the anchor date as 30 Nov 2026", () => expect(formatDate("2026-11-30")).toBe("30 Nov 2026"));
+  it("gives deadline day and month", () => expect(dateParts("2026-12-12")).toMatchObject({ day: "12", month: "Dec" }));
+  it("shows FY landing with two decimals in millions", () => expect(formatBrlKpi(18512345)).toBe("BRL 18.51M"));
+  it("shows thousands compactly", () => expect(formatBrlKpi(910600)).toBe("BRL 910.6K"));
+});

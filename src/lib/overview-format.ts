@@ -23,3 +23,21 @@ export function buildLandingSentence(kpis: OverviewKpis): string {
   const direction = kpis.landing_vs_budget > 0 ? "over" : "under";
   return `Fiscal year ${kpis.fiscal_year} lands ${formatBrlMillions(Math.abs(kpis.landing_vs_budget))} (${formatPercent(Math.abs(kpis.landing_vs_budget_pct))}) ${direction} budget.`;
 }
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** Splits an ISO date ("2026-11-30") without time-zone shifts. */
+export function dateParts(iso: string): { day: string; month: string; year: string } {
+  const [year = "", month = "1", day = ""] = iso.slice(0, 10).split("-");
+  return { day: String(Number(day)), month: MONTHS[Number(month) - 1] ?? "", year };
+}
+
+/** "30 Nov 2026" */
+export function formatDate(iso: string): string {
+  const p = dateParts(iso);
+  return `${p.day} ${p.month} ${p.year}`;
+}
+
+export function budgetDirection(variance: number): "over" | "under" | "on" {
+  return variance > 0 ? "over" : variance < 0 ? "under" : "on";
+}
