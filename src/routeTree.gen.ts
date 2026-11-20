@@ -15,6 +15,7 @@ import { Route as IntakeRouteImport } from './routes/intake'
 import { Route as RenewalsRouteImport } from './routes/renewals'
 import { Route as SavingsRouteImport } from './routes/savings'
 import { Route as SigninRouteImport } from './routes/signin'
+import { Route as ApiExtractContractRouteImport } from './routes/api/extract-contract'
 import { Route as VendorsIndexRouteImport } from './routes/vendors.index'
 import { Route as VendorsVendorIdRouteImport } from './routes/vendors.$vendorId'
 
@@ -48,6 +49,11 @@ const SigninRoute = SigninRouteImport.update({
   path: '/signin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiExtractContractRoute = ApiExtractContractRouteImport.update({
+  id: '/api/extract-contract',
+  path: '/api/extract-contract',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VendorsIndexRoute = VendorsIndexRouteImport.update({
   id: '/vendors/',
   path: '/vendors/',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/renewals': typeof RenewalsRoute
   '/savings': typeof SavingsRoute
   '/signin': typeof SigninRoute
+  '/api/extract-contract': typeof ApiExtractContractRoute
   '/vendors/$vendorId': typeof VendorsVendorIdRoute
   '/vendors/': typeof VendorsIndexRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/renewals': typeof RenewalsRoute
   '/savings': typeof SavingsRoute
   '/signin': typeof SigninRoute
+  '/api/extract-contract': typeof ApiExtractContractRoute
   '/vendors/$vendorId': typeof VendorsVendorIdRoute
   '/vendors': typeof VendorsIndexRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/renewals': typeof RenewalsRoute
   '/savings': typeof SavingsRoute
   '/signin': typeof SigninRoute
+  '/api/extract-contract': typeof ApiExtractContractRoute
   '/vendors/$vendorId': typeof VendorsVendorIdRoute
   '/vendors/': typeof VendorsIndexRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/renewals'
     | '/savings'
     | '/signin'
+    | '/api/extract-contract'
     | '/vendors/$vendorId'
     | '/vendors/'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/renewals'
     | '/savings'
     | '/signin'
+    | '/api/extract-contract'
     | '/vendors/$vendorId'
     | '/vendors'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/renewals'
     | '/savings'
     | '/signin'
+    | '/api/extract-contract'
     | '/vendors/$vendorId'
     | '/vendors/'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   RenewalsRoute: typeof RenewalsRoute
   SavingsRoute: typeof SavingsRoute
   SigninRoute: typeof SigninRoute
+  ApiExtractContractRoute: typeof ApiExtractContractRoute
   VendorsVendorIdRoute: typeof VendorsVendorIdRoute
   VendorsIndexRoute: typeof VendorsIndexRoute
 }
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SigninRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/extract-contract': {
+      id: '/api/extract-contract'
+      path: '/api/extract-contract'
+      fullPath: '/api/extract-contract'
+      preLoaderRoute: typeof ApiExtractContractRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/vendors/': {
       id: '/vendors/'
       path: '/vendors'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   RenewalsRoute: RenewalsRoute,
   SavingsRoute: SavingsRoute,
   SigninRoute: SigninRoute,
+  ApiExtractContractRoute: ApiExtractContractRoute,
   VendorsVendorIdRoute: VendorsVendorIdRoute,
   VendorsIndexRoute: VendorsIndexRoute,
 }

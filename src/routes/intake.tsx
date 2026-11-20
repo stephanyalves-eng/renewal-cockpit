@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ArrowUpRight, CircleCheck, CircleHelp, CircleX, TriangleAlert } from "lucide-react";
 import { QuerySection } from "@/components/query-section";
 import { useSession } from "@/hooks/use-session";
+import { ExtractContractCard, useIsAdmin } from "@/components/extract-contract-card";
 import { compareField, FIELD_LABEL, groupByFile, type ExtractionGroup } from "@/lib/intake-logic";
 import { getIntakeData } from "@/lib/intake.functions";
 import type { ContractTerms, IntakeField } from "@/lib/intake.types";
@@ -37,6 +38,7 @@ const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-
 
 function Page() {
   const session = useSession();
+  const isAdmin = useIsAdmin(session);
   return (
     <main className="mx-auto max-w-6xl px-4 pt-8 pb-12 sm:px-6 sm:pt-10">
       <p className="eyebrow text-muted-foreground">Intake</p>
@@ -56,12 +58,14 @@ function Page() {
             </li>
           ))}
         </ul>
-        <p className="mt-4 text-sm text-muted-foreground">
+        {!(session && isAdmin) && <p className="mt-4 text-sm text-muted-foreground">
           {session
-            ? "Live extraction is not connected yet."
+            ? "Live extraction is limited to the owner."
             : "Live extraction is limited to the owner to keep this demo free to run."}
-        </p>
+        </p>}
       </section>
+
+      {session && isAdmin && <ExtractContractCard session={session} />}
 
       <QuerySection fallback={<div className="mt-6 h-72 animate-pulse bg-muted" aria-busy="true" aria-label="Loading extractions" />} errorTitle="Stored extractions couldn't load">
         <StoredExtractions />

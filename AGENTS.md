@@ -34,3 +34,4 @@ use the editor.
 - Money formatting goes through src/lib/money.ts; one place for BRL display rules.
 - No backend yet: the user will connect their own Supabase project; do not enable Lovable Cloud.
 - Reads use the publishable-key client (src/lib/public-db.server.ts in server fns); writes use the browser client with the user's session. Never use supabaseAdmin/service role; RLS must govern all access.
+- Owner-only AI extraction runs in the server route /api/extract-contract (src/lib/intake-extract.server.ts): verifies the caller's JWT and app_admins row under RLS before any AI call; never writes. Edge functions are blocked in this TanStack project.
