@@ -1,5 +1,7 @@
 # Renewal Cockpit
 
+**Live demo:** https://stephanyalves-eng-renewal-cockpit.stephany-alves.workers.dev
+
 > **Synthetic data.** A fictional fintech with fictional vendors. The only real-world values are public
 > list prices used as price benchmarks, each shown with its source and date.
 
