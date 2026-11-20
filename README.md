@@ -16,6 +16,17 @@ Data, forecast, variance split and renewal rules live in the companion repositor
 **[vendor-renewal-cockpit](https://github.com/stephanyalves-eng/vendor-renewal-cockpit)**, which builds
 and tests every figure this app shows.
 
+## Screenshots
+
+![Overview filtered to Cloud: FY landing 18.4% over budget, savings and renewals for that category](https://raw.githubusercontent.com/stephanyalves-eng/vendor-renewal-cockpit/main/docs/images/overview-cloud.jpg)
+
+| | |
+| --- | --- |
+| <img src="https://raw.githubusercontent.com/stephanyalves-eng/vendor-renewal-cockpit/main/docs/images/budget-october.jpg" alt="Budget vs. actual for October 2026 with the monthly chart" width="400"> | <img src="https://raw.githubusercontent.com/stephanyalves-eng/vendor-renewal-cockpit/main/docs/images/budget-waterfall-october.jpg" alt="October waterfall from budget to landing: price, volume and unbudgeted" width="400"> |
+| **Budget vs. actual**: filters by category, department, period and month | **Waterfall**: budget to landing, split into price, volume and unbudgeted |
+| <img src="https://raw.githubusercontent.com/stephanyalves-eng/vendor-renewal-cockpit/main/docs/images/renewals.jpg" alt="Renewals table sorted by decision deadline, Dealstream expanded" width="400"> | <img src="https://raw.githubusercontent.com/stephanyalves-eng/vendor-renewal-cockpit/main/docs/images/intake.jpg" alt="Contract intake: AI-extracted terms checked against the contract on file, 5 of 5 match" width="400"> |
+| **Renewals**: decision deadline, recommendation and the rule behind it | **Contract intake**: AI-extracted terms checked field by field |
+
 ## Pages
 
 | Page | What it shows |
