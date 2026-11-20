@@ -8,6 +8,7 @@ const nav = [
   { to: "/", label: "Overview" },
   { to: "/budget", label: "Budget vs. actual" },
   { to: "/renewals", label: "Renewals" },
+  { to: "/vendors", label: "Vendors" },
   { to: "/savings", label: "Savings" },
   { to: "/intake", label: "Contract intake" },
 ] as const;

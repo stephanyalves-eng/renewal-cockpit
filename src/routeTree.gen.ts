@@ -15,6 +15,7 @@ import { Route as IntakeRouteImport } from './routes/intake'
 import { Route as RenewalsRouteImport } from './routes/renewals'
 import { Route as SavingsRouteImport } from './routes/savings'
 import { Route as SigninRouteImport } from './routes/signin'
+import { Route as VendorsIndexRouteImport } from './routes/vendors.index'
 import { Route as VendorsVendorIdRouteImport } from './routes/vendors.$vendorId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -47,6 +48,11 @@ const SigninRoute = SigninRouteImport.update({
   path: '/signin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VendorsIndexRoute = VendorsIndexRouteImport.update({
+  id: '/vendors/',
+  path: '/vendors/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VendorsVendorIdRoute = VendorsVendorIdRouteImport.update({
   id: '/vendors/$vendorId',
   path: '/vendors/$vendorId',
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/savings': typeof SavingsRoute
   '/signin': typeof SigninRoute
   '/vendors/$vendorId': typeof VendorsVendorIdRoute
+  '/vendors/': typeof VendorsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/savings': typeof SavingsRoute
   '/signin': typeof SigninRoute
   '/vendors/$vendorId': typeof VendorsVendorIdRoute
+  '/vendors': typeof VendorsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +88,7 @@ export interface FileRoutesById {
   '/savings': typeof SavingsRoute
   '/signin': typeof SigninRoute
   '/vendors/$vendorId': typeof VendorsVendorIdRoute
+  '/vendors/': typeof VendorsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
     | '/savings'
     | '/signin'
     | '/vendors/$vendorId'
+    | '/vendors/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/savings'
     | '/signin'
     | '/vendors/$vendorId'
+    | '/vendors'
   id:
     | '__root__'
     | '/'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/savings'
     | '/signin'
     | '/vendors/$vendorId'
+    | '/vendors/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +131,7 @@ export interface RootRouteChildren {
   SavingsRoute: typeof SavingsRoute
   SigninRoute: typeof SigninRoute
   VendorsVendorIdRoute: typeof VendorsVendorIdRoute
+  VendorsIndexRoute: typeof VendorsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SigninRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vendors/': {
+      id: '/vendors/'
+      path: '/vendors'
+      fullPath: '/vendors/'
+      preLoaderRoute: typeof VendorsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/vendors/$vendorId': {
       id: '/vendors/$vendorId'
       path: '/vendors/$vendorId'
@@ -183,6 +203,7 @@ const rootRouteChildren: RootRouteChildren = {
   SavingsRoute: SavingsRoute,
   SigninRoute: SigninRoute,
   VendorsVendorIdRoute: VendorsVendorIdRoute,
+  VendorsIndexRoute: VendorsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
