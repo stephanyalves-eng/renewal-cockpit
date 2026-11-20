@@ -1,11 +1,22 @@
 import { formatBrlMillions } from "./money";
-import type { CategoryLanding, OverviewKpis } from "./overview.types";
+import type { CategoryKpis, CategoryLanding, OverviewKpis } from "./overview.types";
 
 /** View percentages are fractions: 0.055 is displayed as 5.5%. */
 export function formatPercent(value: number, withSign = false): string {
   const percent = value * 100;
   const sign = withSign && percent > 0 ? "+" : "";
   return `${sign}${percent.toFixed(1)}%`;
+}
+
+/** "—" when the percentage is undefined (no budget in the slice). */
+export function formatPercentOrDash(value: number | null, withSign = false): string {
+  return value === null ? "—" : formatPercent(value, withSign);
+}
+
+/** KPIs for the page: the consolidated row, or the selected category's row from v_kpis_by_category. */
+export function kpisFor(overall: OverviewKpis, byCategory: CategoryKpis[], category: string | null): OverviewKpis | null {
+  if (category === null) return overall;
+  return byCategory.find((r) => r.category === category) ?? null;
 }
 
 export function getLargestOverrunCategory(
@@ -21,7 +32,7 @@ export function getLargestOverrunCategory(
 export function buildLandingSentence(kpis: OverviewKpis): string {
   if (kpis.landing_vs_budget === 0) return `Fiscal year ${kpis.fiscal_year} lands on budget.`;
   const direction = kpis.landing_vs_budget > 0 ? "over" : "under";
-  return `Fiscal year ${kpis.fiscal_year} lands ${formatBrlMillions(Math.abs(kpis.landing_vs_budget))} (${formatPercent(Math.abs(kpis.landing_vs_budget_pct))}) ${direction} budget.`;
+  return `Fiscal year ${kpis.fiscal_year} lands ${formatBrlMillions(Math.abs(kpis.landing_vs_budget))} (${formatPercentOrDash(kpis.landing_vs_budget_pct === null ? null : Math.abs(kpis.landing_vs_budget_pct))}) ${direction} budget.`;
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

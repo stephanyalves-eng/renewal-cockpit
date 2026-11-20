@@ -42,3 +42,15 @@ describe("demo status", () => {
   it("browser value overrides the database value", () => expect(effectiveStatus("active", "C1", { C1: "terminated" })).toBe("terminated"));
   it("falls back to the database value", () => expect(effectiveStatus("active", "C1", {})).toBe("active"));
 });
+
+import { formatPercentOrDash, kpisFor } from "./overview-format";
+import type { CategoryKpis, OverviewKpis } from "./overview.types";
+
+describe("category selection", () => {
+  const overall = { fy_landing: 100, urgent_decisions: 2 } as OverviewKpis;
+  const cloud = { category: "Cloud", fy_landing: 40, urgent_decisions: 0 } as CategoryKpis;
+  it("uses the consolidated KPIs when no category is selected", () => expect(kpisFor(overall, [cloud], null)).toBe(overall));
+  it("uses the category row when one is selected", () => expect(kpisFor(overall, [cloud], "Cloud")).toBe(cloud));
+  it("returns null for an unknown category instead of showing other numbers", () => expect(kpisFor(overall, [cloud], "SaaS")).toBeNull());
+  it("shows a dash when the percentage is undefined", () => expect(formatPercentOrDash(null)).toBe("—"));
+});

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   categoryLandingQueryOptions,
+  kpisByCategoryQueryOptions,
   OverviewDashboard,
   overviewKpisQueryOptions,
   urgentRenewalsQueryOptions,
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/")({
   loader: ({ context }) => {
     void context.queryClient.prefetchQuery(overviewKpisQueryOptions);
     void context.queryClient.prefetchQuery(categoryLandingQueryOptions);
+    void context.queryClient.prefetchQuery(kpisByCategoryQueryOptions);
     void context.queryClient.prefetchQuery(urgentRenewalsQueryOptions);
   },
   component: Page,

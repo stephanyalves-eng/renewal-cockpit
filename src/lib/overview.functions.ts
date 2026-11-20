@@ -1,5 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import type { CategoryLanding, OverviewKpis, UrgentRenewal } from "./overview.types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { CategoryKpis, CategoryLanding, OverviewKpis, UrgentRenewal } from "./overview.types";
+
+type UntypedDb = SupabaseClient;
+type KpiRow = { [K in keyof CategoryKpis]: CategoryKpis[K] | null };
 
 function requiredNumber(value: number | null, field: string): number {
   if (value === null) throw new Error(`Missing numeric field: ${field}`);
@@ -31,7 +35,7 @@ export const getOverviewKpis = createServerFn({ method: "GET" }).handler(async (
     fy_landing: requiredNumber(data.fy_landing, "fy_landing"),
     fy_budget: requiredNumber(data.fy_budget, "fy_budget"),
     landing_vs_budget: requiredNumber(data.landing_vs_budget, "landing_vs_budget"),
-    landing_vs_budget_pct: requiredNumber(data.landing_vs_budget_pct, "landing_vs_budget_pct"),
+    landing_vs_budget_pct: data.landing_vs_budget_pct,
     savings_ytd: requiredNumber(data.savings_ytd, "savings_ytd"),
     cost_avoidance_ytd: requiredNumber(data.cost_avoidance_ytd, "cost_avoidance_ytd"),
     renewals_next_90_days: requiredNumber(data.renewals_next_90_days, "renewals_next_90_days"),
@@ -71,7 +75,7 @@ export const getUrgentRenewals = createServerFn({ method: "GET" }).handler(
     const db = (await import("./public-db.server")).createPublicDb();
     const { data, error } = await db
       .from("v_renewals_due")
-      .select("contract_id, vendor_name, decision_deadline, recommendation, auto_renew, rationale, estimated_annual_impact, end_date")
+      .select("contract_id, category, vendor_name, decision_deadline, recommendation, auto_renew, rationale, estimated_annual_impact, end_date")
       .eq("urgent", true)
       .order("decision_deadline", { ascending: true });
 
@@ -82,6 +86,7 @@ export const getUrgentRenewals = createServerFn({ method: "GET" }).handler(
 
     return data.map((row) => ({
       contract_id: requiredString(row.contract_id, "contract_id"),
+      category: requiredString(row.category, "category"),
       vendor_name: requiredString(row.vendor_name, "vendor_name"),
       decision_deadline: requiredString(row.decision_deadline, "decision_deadline"),
       recommendation: requiredString(row.recommendation, "recommendation"),
@@ -92,3 +97,33 @@ export const getUrgentRenewals = createServerFn({ method: "GET" }).handler(
     }));
   },
 );
+
+/** The Overview KPIs per category (same definitions as v_kpis; the rows add up to it). */
+export const getKpisByCategory = createServerFn({ method: "GET" }).handler(async (): Promise<CategoryKpis[]> => {
+  // v_kpis_by_category is newer than the generated Supabase types, so its rows are typed here.
+  const db = (await import("./public-db.server")).createPublicDb() as unknown as UntypedDb;
+  const { data, error } = await db
+    .from("v_kpis_by_category")
+    .select(
+      "category, anchor_date, fiscal_year, fy_landing, fy_budget, landing_vs_budget, landing_vs_budget_pct, savings_ytd, cost_avoidance_ytd, renewals_next_90_days, urgent_decisions, value_at_risk_auto_renewal",
+    )
+    .order("category", { ascending: true });
+  if (error) {
+    console.error("v_kpis_by_category query failed", error);
+    throw new Error("Category KPIs are unavailable.");
+  }
+  return (data as KpiRow[]).map((r) => ({
+    category: requiredString(r.category, "category"),
+    anchor_date: requiredString(r.anchor_date, "anchor_date"),
+    fiscal_year: requiredNumber(r.fiscal_year, "fiscal_year"),
+    fy_landing: requiredNumber(r.fy_landing, "fy_landing"),
+    fy_budget: requiredNumber(r.fy_budget, "fy_budget"),
+    landing_vs_budget: requiredNumber(r.landing_vs_budget, "landing_vs_budget"),
+    landing_vs_budget_pct: r.landing_vs_budget_pct,
+    savings_ytd: requiredNumber(r.savings_ytd, "savings_ytd"),
+    cost_avoidance_ytd: requiredNumber(r.cost_avoidance_ytd, "cost_avoidance_ytd"),
+    renewals_next_90_days: requiredNumber(r.renewals_next_90_days, "renewals_next_90_days"),
+    urgent_decisions: requiredNumber(r.urgent_decisions, "urgent_decisions"),
+    value_at_risk_auto_renewal: requiredNumber(r.value_at_risk_auto_renewal, "value_at_risk_auto_renewal"),
+  }));
+});
