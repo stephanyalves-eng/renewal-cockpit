@@ -1,4 +1,4 @@
-import type { TrendRow, WaterfallRow, WaterfallScope } from "./budget.types";
+import type { BudgetFilters, Component, MonthlyVarianceRow, TrendRow, WaterfallRow, WaterfallScope } from "./budget.types";
 
 /**
  * Display helpers for the Budget vs. actual page. They only filter and add up rows that the
@@ -83,4 +83,67 @@ export function waterfallSteps(rows: WaterfallRow[], scope: WaterfallScope): Wat
   const landing = sum("landing");
   steps.push({ step: "Landing", amount: landing, from: 0, to: landing, kind: "total" });
   return steps;
+}
+
+/* ---------- v_variance_monthly helpers ---------- */
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/**
+ * Rows for the current filters: category and department, then either one month (full-year rows of
+ * that month, which equal the year-to-date rows for closed months) or the whole chosen period.
+ */
+export function periodRows(rows: MonthlyVarianceRow[], f: BudgetFilters): MonthlyVarianceRow[] {
+  const sliced = filterRows(rows, f.category ? [f.category] : [], f.department ? [f.department] : []);
+  if (f.month) return sliced.filter((r) => r.scope === "fy_landing" && r.month === f.month);
+  return sliced.filter((r) => r.scope === f.period);
+}
+
+export type SplitTotals = { budget: number; price: number; volume: number; unbudgeted: number; landing: number };
+
+export function sumSplit(rows: MonthlyVarianceRow[]): SplitTotals {
+  const t = { budget: 0, price: 0, volume: 0, unbudgeted: 0, landing: 0 };
+  for (const r of rows) {
+    t.budget += r.budget;
+    t.price += r.price;
+    t.volume += r.volume;
+    t.unbudgeted += r.unbudgeted;
+    t.landing += r.landing;
+  }
+  return { budget: round2(t.budget), price: round2(t.price), volume: round2(t.volume), unbudgeted: round2(t.unbudgeted), landing: round2(t.landing) };
+}
+
+export function stepsFromTotals(t: SplitTotals): WaterfallStep[] {
+  const steps: WaterfallStep[] = [{ step: "Budget", amount: t.budget, from: 0, to: t.budget, kind: "total" }];
+  let running = t.budget;
+  for (const [step, amount] of [["Price", t.price], ["Volume", t.volume], ["Unbudgeted", t.unbudgeted]] as const) {
+    const next = round2(running + amount);
+    steps.push({ step, amount, from: running, to: next, kind: "change" });
+    running = next;
+  }
+  steps.push({ step: "Landing", amount: t.landing, from: 0, to: t.landing, kind: "total" });
+  return steps;
+}
+
+/** One component per fiscal-year month (full-year rows), for category and department only. */
+export function componentByMonth(
+  rows: MonthlyVarianceRow[],
+  f: BudgetFilters,
+  component: Component,
+): { month: string; value: number; is_forecast: boolean }[] {
+  const sliced = filterRows(rows, f.category ? [f.category] : [], f.department ? [f.department] : []).filter((r) => r.scope === "fy_landing");
+  const byMonth = new Map<string, { month: string; value: number; is_forecast: boolean }>();
+  for (const r of sliced) {
+    const p = byMonth.get(r.month) ?? { month: r.month, value: 0, is_forecast: r.is_forecast };
+    p.value = round2(p.value + r[component]);
+    byMonth.set(r.month, p);
+  }
+  return [...byMonth.values()].sort((a, b) => a.month.localeCompare(b.month));
+}
+
+export function landingSplit(rows: MonthlyVarianceRow[]): { actual: number; forecast: number } {
+  return {
+    actual: round2(rows.filter((r) => !r.is_forecast).reduce((s, r) => s + r.landing, 0)),
+    forecast: round2(rows.filter((r) => r.is_forecast).reduce((s, r) => s + r.landing, 0)),
+  };
 }

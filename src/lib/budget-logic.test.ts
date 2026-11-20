@@ -61,3 +61,44 @@ describe("waterfall", () => {
   });
   it("uses only the chosen scope", () => expect(waterfallSteps(waterfall, "ytd")[0]!.amount).toBe(900));
 });
+
+import { componentByMonth, landingSplit, periodRows, sumSplit } from "./budget-logic";
+import type { BudgetFilters, MonthlyVarianceRow } from "./budget.types";
+
+const mv: MonthlyVarianceRow[] = [
+  { fiscal_year: 2026, scope: "fy_landing", month: "2026-10-01", is_forecast: false, category: "Cloud", owner_department: "Engineering", budget: 100, price: -2, volume: 12, unbudgeted: 0, landing: 110 },
+  { fiscal_year: 2026, scope: "fy_landing", month: "2026-10-01", is_forecast: false, category: "SaaS", owner_department: "IT", budget: 50, price: 1, volume: 0, unbudgeted: 4, landing: 55 },
+  { fiscal_year: 2026, scope: "fy_landing", month: "2026-12-01", is_forecast: true, category: "Cloud", owner_department: "Engineering", budget: 105, price: -3, volume: 20, unbudgeted: 0, landing: 122 },
+  { fiscal_year: 2026, scope: "ytd", month: "2026-10-01", is_forecast: false, category: "Cloud", owner_department: "Engineering", budget: 100, price: -2, volume: 12, unbudgeted: 0, landing: 110 },
+  { fiscal_year: 2026, scope: "ytd", month: "2026-10-01", is_forecast: false, category: "SaaS", owner_department: "IT", budget: 50, price: 1, volume: 0, unbudgeted: 4, landing: 55 },
+];
+const base: BudgetFilters = { category: null, department: null, period: "fy_landing", month: null, component: null };
+
+describe("monthly variance selection", () => {
+  it("uses the chosen period when no month is selected", () => {
+    expect(periodRows(mv, base)).toHaveLength(3);
+    expect(periodRows(mv, { ...base, period: "ytd" })).toHaveLength(2);
+  });
+  it("a selected month uses the full-year rows of that month only", () => {
+    const rows = periodRows(mv, { ...base, period: "ytd", month: "2026-12-01" });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.is_forecast).toBe(true);
+  });
+  it("combines category and department", () => {
+    expect(periodRows(mv, { ...base, category: "Cloud", department: "IT" })).toHaveLength(0);
+    expect(periodRows(mv, { ...base, category: "SaaS", department: "IT" })).toHaveLength(1);
+  });
+  it("adds up the split so that budget + components = landing", () => {
+    const t = sumSplit(periodRows(mv, base));
+    expect(t).toEqual({ budget: 255, price: -4, volume: 32, unbudgeted: 4, landing: 287 });
+    expect(t.budget + t.price + t.volume + t.unbudgeted).toBe(t.landing);
+  });
+  it("gives a component month by month for the full year, respecting filters", () => {
+    expect(componentByMonth(mv, { ...base, category: "Cloud" }, "volume")).toEqual([
+      { month: "2026-10-01", value: 12, is_forecast: false },
+      { month: "2026-12-01", value: 20, is_forecast: true },
+    ]);
+  });
+  it("splits the landing into actuals to date and forecast", () =>
+    expect(landingSplit(periodRows(mv, base))).toEqual({ actual: 165, forecast: 122 }));
+});

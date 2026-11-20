@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import type { TrendRow, WaterfallRow, WaterfallScope } from "./budget.types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { MonthlyVarianceRow, TrendRow, WaterfallRow, WaterfallScope } from "./budget.types";
 
 const num = (v: number | null) => (v === null ? null : Number(v));
 
@@ -37,6 +38,33 @@ export const getVarianceWaterfall = createServerFn({ method: "GET" }).handler(as
     scope: (r.scope ?? "fy_landing") as WaterfallScope,
     category: r.category ?? "",
     owner_department: r.owner_department ?? "",
+    budget: Number(r.budget ?? 0),
+    price: Number(r.price ?? 0),
+    volume: Number(r.volume ?? 0),
+    unbudgeted: Number(r.unbudgeted ?? 0),
+    landing: Number(r.landing ?? 0),
+  }));
+});
+
+/** v_variance_monthly is newer than the generated Supabase types, so its rows are typed here. */
+export const getVarianceMonthly = createServerFn({ method: "GET" }).handler(async (): Promise<MonthlyVarianceRow[]> => {
+  const db = (await import("./public-db.server")).createPublicDb() as unknown as SupabaseClient;
+  const { data, error } = await db
+    .from("v_variance_monthly")
+    .select("fiscal_year, scope, month, category, owner_department, is_forecast, budget, price, volume, unbudgeted, landing")
+    .order("month", { ascending: true });
+  if (error) {
+    console.error("v_variance_monthly query failed", error);
+    throw new Error("Monthly variance figures are unavailable.");
+  }
+  type Row = { [K in keyof MonthlyVarianceRow]: MonthlyVarianceRow[K] | null };
+  return (data as Row[]).map((r) => ({
+    fiscal_year: Number(r.fiscal_year ?? 0),
+    scope: (r.scope ?? "fy_landing") as WaterfallScope,
+    month: r.month ?? "",
+    category: r.category ?? "",
+    owner_department: r.owner_department ?? "",
+    is_forecast: r.is_forecast === true,
     budget: Number(r.budget ?? 0),
     price: Number(r.price ?? 0),
     volume: Number(r.volume ?? 0),
