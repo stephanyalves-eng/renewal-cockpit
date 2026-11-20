@@ -2,14 +2,33 @@ import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, Minus, Plus, TriangleAlert } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
+import { ExportButton } from "@/components/export-button";
 import { QuerySection } from "@/components/query-section";
 import { useSession } from "@/hooks/use-session";
+import type { ExportColumn } from "@/lib/export-excel";
 import { supabase } from "@/integrations/supabase/client";
 import { clearOverrides, effectiveStatus, readOverrides, writeOverride, type StatusOverrides } from "@/lib/demo-status";
 import { formatBrlCents, formatBrlFull } from "@/lib/money";
 import { formatDate } from "@/lib/overview-format";
 import { getRenewals } from "@/lib/renewals.functions";
 import { CONTRACT_STATUSES, type RenewalRow } from "@/lib/renewals.types";
+
+/** Same columns as the table, with the status the viewer sees (browser overrides included). */
+function renewalExportColumns(statusOf: (r: RenewalRow) => string): ExportColumn<RenewalRow>[] {
+  return [
+    { header: "Vendor", value: (r) => r.vendor_name },
+    { header: "Category", value: (r) => r.category },
+    { header: "End date", value: (r) => r.end_date },
+    { header: "Auto-renew", value: (r) => (r.auto_renew ? "Yes" : "No") },
+    { header: "Notice (days)", value: (r) => r.notice_days },
+    { header: "Decision deadline", value: (r) => r.decision_deadline },
+    { header: "Urgent", value: (r) => (r.urgent ? "Urgent" : "") },
+    { header: "Days left", value: (r) => r.days_to_deadline },
+    { header: "Recommendation", value: (r) => r.recommendation },
+    { header: "Estimated annual impact (BRL)", value: (r) => r.estimated_annual_impact },
+    { header: "Status", value: statusOf },
+  ];
+}
 
 const renewalsQueryOptions = queryOptions({ queryKey: ["renewals"], queryFn: () => getRenewals() });
 const DESCRIPTION = "Contracts that need a decision before their notice window closes and they auto-renew.";
@@ -185,6 +204,9 @@ function RenewalsTable() {
           Estimated annual impact {SortIcon && <SortIcon className="h-3.5 w-3.5" aria-hidden="true" />}
           {sort !== "deadline" && <span className="sr-only">{sort === "impact_desc" ? "highest first" : "lowest first"}</span>}
         </button>
+        <span className="ml-auto">
+          <ExportButton page="renewals" columns={renewalExportColumns(statusOf)} rows={rows} />
+        </span>
       </div>
 
       {!editor.signedIn && (

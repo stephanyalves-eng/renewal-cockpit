@@ -1,8 +1,18 @@
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ExportButton } from "@/components/export-button";
 import { QuerySection } from "@/components/query-section";
+import type { ExportColumn } from "@/lib/export-excel";
 import { humanize } from "@/lib/vendor-format";
 import { getVendorList } from "@/lib/vendors.functions";
+import type { VendorListRow } from "@/lib/vendors.types";
+
+const vendorExportColumns: ExportColumn<VendorListRow>[] = [
+  { header: "Vendor", value: (v) => v.vendor_name },
+  { header: "Category", value: (v) => v.category },
+  { header: "Status", value: (v) => humanize(v.status) },
+  { header: "Recommendation", value: (v) => v.recommendation ?? "No decision due" },
+];
 
 const vendorListQuery = queryOptions({ queryKey: ["vendors"], queryFn: () => getVendorList() });
 const DESCRIPTION = "Every vendor with its category, contract status and current renewal recommendation.";
@@ -41,7 +51,12 @@ function VendorList() {
   const { data } = useSuspenseQuery(vendorListQuery);
   if (data.length === 0) return <p className="mt-8 text-sm text-muted-foreground">No vendors.</p>;
   return (
-    <div className="surface mt-8 overflow-x-auto">
+    <>
+    <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+      <p className="text-sm text-muted-foreground">{data.length} vendors</p>
+      <ExportButton page="vendors" columns={vendorExportColumns} rows={data} />
+    </div>
+    <div className="surface mt-3 overflow-x-auto">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">Vendors ({data.length})</caption>
         <thead className="eyebrow text-muted-foreground">
@@ -68,5 +83,6 @@ function VendorList() {
         </tbody>
       </table>
     </div>
+    </>
   );
 }
