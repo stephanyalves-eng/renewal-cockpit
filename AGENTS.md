@@ -28,3 +28,8 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+- Shared header/footer and page layout live in src/components/page-shell.tsx, mounted from __root; keeps every page consistent.
+- Money formatting goes through src/lib/money.ts; one place for BRL display rules.
+- No backend yet: the user will connect their own Supabase project; do not enable Lovable Cloud.
