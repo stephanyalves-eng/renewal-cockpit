@@ -18,13 +18,13 @@ and tests every figure this app shows.
 
 ## Screenshots
 
-![Overview filtered to Cloud: FY landing 18.4% over budget, savings and renewals for that category](https://raw.githubusercontent.com/stephanyalves-eng/vendor-renewal-cockpit/main/docs/images/overview-cloud.jpg)
+![Highlights: clicking Cloud on the Overview, filtering Budget vs. actual to Cloud, and opening the most urgent renewal](https://raw.githubusercontent.com/stephanyalves-eng/vendor-renewal-cockpit/main/docs/images/highlights.gif)
 
 | | |
 | --- | --- |
-| <img src="https://raw.githubusercontent.com/stephanyalves-eng/vendor-renewal-cockpit/main/docs/images/budget-october.jpg" alt="Budget vs. actual for October 2026 with the monthly chart" width="400"> | <img src="https://raw.githubusercontent.com/stephanyalves-eng/vendor-renewal-cockpit/main/docs/images/budget-waterfall-october.jpg" alt="October waterfall from budget to landing: price, volume and unbudgeted" width="400"> |
-| **Budget vs. actual**: filters by category, department, period and month | **Waterfall**: budget to landing, split into price, volume and unbudgeted |
-| <img src="https://raw.githubusercontent.com/stephanyalves-eng/vendor-renewal-cockpit/main/docs/images/renewals.jpg" alt="Renewals table sorted by decision deadline, Dealstream expanded" width="400"> | <img src="https://raw.githubusercontent.com/stephanyalves-eng/vendor-renewal-cockpit/main/docs/images/intake.jpg" alt="Contract intake: AI-extracted terms checked against the contract on file, 5 of 5 match" width="400"> |
+| <img src="https://raw.githubusercontent.com/stephanyalves-eng/vendor-renewal-cockpit/main/docs/images/overview-filter.gif" alt="Clicking Cloud on the Overview switches every KPI to that category" width="420"> | <img src="https://raw.githubusercontent.com/stephanyalves-eng/vendor-renewal-cockpit/main/docs/images/budget-filter.gif" alt="Setting Category to Cloud updates the KPIs and the budget-to-landing waterfall" width="420"> |
+| **Overview**: one click filters every number to a category | **Budget vs. actual**: budget to landing, split into price, volume and unbudgeted |
+| <img src="https://raw.githubusercontent.com/stephanyalves-eng/vendor-renewal-cockpit/main/docs/images/renewals-dealstream.gif" alt="Opening Dealstream shows the decision deadline and the rule behind the recommendation" width="420"> | <img src="https://raw.githubusercontent.com/stephanyalves-eng/vendor-renewal-cockpit/main/docs/images/contract-intake.gif" alt="AI-extracted contract terms checked field by field against the contract on file" width="420"> |
 | **Renewals**: decision deadline, recommendation and the rule behind it | **Contract intake**: AI-extracted terms checked field by field |
 
 ## Pages
