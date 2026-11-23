@@ -71,3 +71,7 @@ npm install
 npm run dev     # http://localhost:8080
 npm test        # unit tests for formatting, filters, waterfall, export and field checks
 ```
+
+## License
+
+[MIT](LICENSE). The synthetic data the app displays comes from [vendor-renewal-cockpit](https://github.com/stephanyalves-eng/vendor-renewal-cockpit) and is licensed CC BY 4.0 there.
