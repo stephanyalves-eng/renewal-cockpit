@@ -15,6 +15,7 @@ import {
 } from "@/lib/overview-format";
 import { getCategoryLanding, getKpisByCategory, getOverviewKpis, getUrgentRenewals } from "@/lib/overview.functions";
 import type { CategoryLanding, OverviewKpis } from "@/lib/overview.types";
+import { VideoTour } from "@/components/video-tour";
 
 export const overviewKpisQueryOptions = queryOptions({
   queryKey: ["overview", "kpis"],
@@ -402,9 +403,12 @@ export function OverviewDashboard() {
     <PageContainer>
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
         <h1 className="page-title text-4xl sm:text-5xl">Renewal overview</h1>
-        <QuerySection fallback={<LineSkeleton w="w-48" />} errorTitle="Fiscal year couldn't load">
-          <AsOfLabel />
-        </QuerySection>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <VideoTour />
+          <QuerySection fallback={<LineSkeleton w="w-48" />} errorTitle="Fiscal year couldn't load">
+            <AsOfLabel />
+          </QuerySection>
+        </div>
       </div>
       <div className="mt-3">
         <ActiveSlice category={category} setCategory={setCategory} />
