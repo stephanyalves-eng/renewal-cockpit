@@ -1,5 +1,7 @@
 # Renewal Cockpit
 
+**Companion repository:** [Data and analytics logic](https://github.com/stephanyalves-eng/vendor-renewal-cockpit) · Python pipelines, forecasts, variance analysis and renewal rules.
+
 **Live demo:** https://stephanyalves-eng-renewal-cockpit.stephany-alves.workers.dev
 
 > **Synthetic data.** A fictional fintech with fictional vendors. The only real-world values are public
@@ -11,10 +13,6 @@ It answers three questions a procurement lead is asked every month:
 1. **Will we land the fiscal year on budget?** If not, is it price, volume or spend nobody planned?
 2. **Which contracts need a decision before they auto-renew?** By when, and what should we do?
 3. **Where can we cut or consolidate spend?** How much is each action worth?
-
-Data, forecast, variance split and renewal rules live in the companion repository
-**[vendor-renewal-cockpit](https://github.com/stephanyalves-eng/vendor-renewal-cockpit)**, which builds
-and tests every figure this app shows.
 
 ## Screenshots
 
